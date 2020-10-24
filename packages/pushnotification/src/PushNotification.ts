@@ -14,10 +14,10 @@
 import {
 	NativeModules,
 	DeviceEventEmitter,
-	AsyncStorage,
 	Platform,
 	AppState,
 } from 'react-native';
+import AsyncStorage from '@react-native-community/async-storage';
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
 import { Amplify, ConsoleLogger as Logger, JS } from '@aws-amplify/core';
 
@@ -139,7 +139,7 @@ export default class PushNotification {
 		if (!(await this._registerTokenCached())) {
 			const { appId } = this._config;
 			const cacheKey = 'push_token' + appId;
-			RNPushNotification.getToken(token => {
+			RNPushNotification.getToken((token) => {
 				logger.debug('Get the token from Firebase Service', token);
 				// resend the token in case it's missing in the Pinpoint service
 				// the token will also be cached locally
@@ -151,7 +151,7 @@ export default class PushNotification {
 	async _registerTokenCached(): Promise<boolean> {
 		const { appId } = this._config;
 		const cacheKey = 'push_token' + appId;
-		return AsyncStorage.getItem(cacheKey).then(lastToken => {
+		return AsyncStorage.getItem(cacheKey).then((lastToken) => {
 			if (lastToken) return true;
 			else return false;
 		});
@@ -193,19 +193,19 @@ export default class PushNotification {
 			// Thus calling it when moving from background to foreground subsequently will lead to extra
 			// events being logged with the payload of the initial notification that launched the app
 			PushNotificationIOS.getInitialNotification()
-				.then(data => {
+				.then((data) => {
 					if (data) {
 						handler(data);
 					}
 				})
-				.catch(e => {
+				.catch((e) => {
 					logger.debug('Failed to get the initial notification.', e);
 				});
 		}
 		this._currentState = nextAppState;
 	}
 
-	parseMessageData = rawMessage => {
+	parseMessageData = (rawMessage) => {
 		let eventSource = null;
 		let eventSourceAttributes = {};
 
@@ -284,7 +284,7 @@ export default class PushNotification {
 	}
 
 	handleNotificationOpened(rawMessage) {
-		this._notificationOpenedHandlers.forEach(handler => {
+		this._notificationOpenedHandlers.forEach((handler) => {
 			handler(rawMessage);
 		});
 
@@ -325,7 +325,7 @@ export default class PushNotification {
 		const cacheKey = 'push_token' + appId;
 		logger.debug('update endpoint in push notification', token);
 		AsyncStorage.getItem(cacheKey)
-			.then(lastToken => {
+			.then((lastToken) => {
 				if (!lastToken || lastToken !== token) {
 					logger.debug('refresh the device token with', token);
 					const config = {
@@ -337,13 +337,13 @@ export default class PushNotification {
 						typeof Amplify.Analytics.updateEndpoint === 'function'
 					) {
 						Amplify.Analytics.updateEndpoint(config)
-							.then(data => {
+							.then((data) => {
 								logger.debug(
 									'update endpoint success, setting token into cache'
 								);
 								AsyncStorage.setItem(cacheKey, token);
 							})
-							.catch(e => {
+							.catch((e) => {
 								// ........
 								logger.debug('update endpoint failed', e);
 							});
@@ -352,7 +352,7 @@ export default class PushNotification {
 					}
 				}
 			})
-			.catch(e => {
+			.catch((e) => {
 				logger.debug('set device token in cache failed', e);
 			});
 	}
@@ -360,7 +360,7 @@ export default class PushNotification {
 	// only for android
 	addEventListenerForAndroid(event, handler) {
 		const that = this;
-		const listener = DeviceEventEmitter.addListener(event, data => {
+		const listener = DeviceEventEmitter.addListener(event, (data) => {
 			// for on notification
 			if (event === REMOTE_NOTIFICATION_RECEIVED) {
 				handler(that.parseMessagefromAndroid(data));
@@ -380,7 +380,7 @@ export default class PushNotification {
 
 	addEventListenerForIOS(event, handler) {
 		if (event === REMOTE_TOKEN_RECEIVED) {
-			PushNotificationIOS.addEventListener('register', data => {
+			PushNotificationIOS.addEventListener('register', (data) => {
 				handler(data);
 			});
 		}
@@ -389,7 +389,7 @@ export default class PushNotification {
 		}
 		if (event === REMOTE_NOTIFICATION_OPENED) {
 			PushNotificationIOS.addEventListener('localNotification', handler);
-			AppState.addEventListener('change', nextAppState =>
+			AppState.addEventListener('change', (nextAppState) =>
 				this._checkIfOpenedByNotification(nextAppState, handler)
 			);
 		}
